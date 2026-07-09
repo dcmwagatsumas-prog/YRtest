@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>店長専用ポータル</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 15px; color: #333; }
+    .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 20px; text-align: center; margin-bottom: 15px; }
+    h3 { margin-top: 0; color: #111; }
+    
+    .btn { width: 100%; padding: 16px; font-size: 16px; font-weight: bold; border: none; border-radius: 8px; color: white; cursor: pointer; margin-bottom: 12px; display: block; }
+    .btn-main { background: #007bff; }
+    .btn-save { background: #28a745; height: 55px; }
+    .btn-back { background: #6c757d; }
+    
+    .page { display: none; }
+    .page.active { display: block !important; } 
+
+    input[type="date"] { padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; width: 80%; text-align: center; }
+
+    .menu-section { text-align: left; margin: 20px 0 10px 0; border-bottom: 2px solid #007bff; padding-bottom: 5px; font-weight: bold; }
+    .menu-section.cast { color: #007bff; border-color: #007bff; }
+    .menu-section.staff { color: #607d8b; border-color: #607d8b; }
+    .menu-section.shop { color: #ff9800; border-color: #ff9800; }
+
+    .table-container { overflow: auto; max-height: 60svh; border: 1px solid #ddd; border-radius: 8px; -webkit-overflow-scrolling: touch; }
+    table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 14px; }
+    th, td { border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px; text-align: center; white-space: nowrap; }
+    th { background: #007bff; color: white; position: sticky; top: 0; z-index: 10; }
+    td:first-child { position: sticky; left: 0; background: #f8f9fa; font-weight: bold; z-index: 8; border-right: 2px solid #bbb; }
+    th:first-child { position: sticky; top: 0; left: 0; background: #0056b3; z-index: 12; border-right: 2px solid #bbb; }
+
+    .count-badge { display: block; font-size: 11px; background: rgba(255, 255, 255, 0.2); padding: 2px 4px; border-radius: 4px; margin-top: 4px; font-weight: normal; }
+    
+    select { padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; width: 50px; text-align: center; }
+    select.has-value { background: #e7f3ff; border-color: #007bff; font-weight: bold; color: #004085; }
+    select.need-attention { background: #ffebee; border-color: #f44336; }
+    select.warn-no-wish { background: #fffde7; border-color: #fdd835; font-weight: bold; color: #856404; }
+    
+    input[type="text"].shift-input { padding: 6px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; text-align: center; transition: background-color 0.3s; }
+    .shift-input { width: 95px !important; }
+    .monday-row { background-color: #f2f2f2 !important; }
+    .monday-row input { background-color: transparent !important; border: 1px solid #ccc; }
+
+    #quick-picker { display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 10000; padding: 15px; border-radius: 15px 15px 0 0; box-sizing: border-box; }
+    .picker-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .picker-btn { background: #f8f9fa; border: 1px solid #ddd; padding: 12px; font-size: 14px; font-weight: bold; border-radius: 6px; text-align: center; cursor: pointer; }
+    .picker-btn:active { background: #e2e6ea; }
+    .picker-close { width: 100%; margin-top: 15px; padding: 10px; background: #6c757d; color: white; border: none; border-radius: 6px; }
+
+    #loadingOverlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
+
+    .chat-box { width: 100%; height: 220px; border: 1px solid #ccc; border-radius: 8px; padding: 12px; margin-top: 10px; text-align: left; background: #fafafa; font-size: 13px; overflow-y: auto; box-sizing: border-box; line-height: 1.6; }
+    .chat-input { width: 100%; padding: 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 8px; margin-top: 10px; box-sizing: border-box; resize: vertical; }
+    
+    .chat-box strong { color: #0056b3; font-weight: bold; }
+    .chat-box code { background: #eee; padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+    .chat-box ul { margin: 5px 0; padding-left: 18px; }
+    .chat-box li { margin-bottom: 4px; }
+
+    .ai-setting-panel { display: none; text-align: left; border-top: 1px dashed #ccc; padding-top: 15px; margin-top: 15px; }
+    .ai-setting-panel label { font-weight: bold; font-size: 13px; display: block; margin-top: 8px; }
+    .ai-setting-panel input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; margin-top: 4px; margin-bottom: 8px; font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <div id="quick-picker">
+    <p style="margin: 0 0 10px 0; font-size: 13px; font-weight: bold; color: #666;">時間をクイック選択</p>
+    <div class="picker-grid">
+      <div class="picker-btn" onclick="setPickerValue('20:00〜LAST')">20:00〜LAST</div>
+      <div class="picker-btn" onclick="setPickerValue('21:00〜LAST')">21:00〜LAST</div>
+      <div class="picker-btn" onclick="setPickerValue('18:30〜LAST')">18:30〜LAST</div>
+      <div class="picker-btn" onclick="setPickerValue('9:00〜12:00')">9:00〜12:00</div>
+      <div class="picker-btn" onclick="setPickerValue('10:00〜14:00')">10:00〜14:00</div>
+      <div class="picker-btn" onclick="setPickerValue('20:00〜21:30')">20:00〜21:30</div>
+      <div class="picker-btn" onclick="setPickerValue('12:00〜')">12:00〜</div>
+      <div class="picker-btn" onclick="setPickerValue('24:00〜')">24:00〜</div>
+    </div>
+    <button class="picker-close" onclick="closePicker()">閉じる</button>
+  </div>
+
+  <div id="customModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 25px; border-radius: 12px; text-align: center; width: 85%; max-width: 320px;">
+      <p id="modalMessage" style="font-size: 16px; margin-bottom: 20px; white-space: pre-wrap; font-weight: bold; color: #333;"></p>
+      <input type="text" id="modalInput" style="display: none; width: 90%; padding: 12px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; text-align: center;">
+      <div style="display: flex; justify-content: space-between; gap: 10px;">
+        <button id="modalCancel" class="btn btn-back" style="margin: 0; padding: 12px; font-size: 14px;">キャンセル</button>
+        <button id="modalOk" class="btn btn-main" style="margin: 0; padding: 12px; font-size: 14px;">OK</button>
+      </div>
+    </div>
+  </div>
+  <div id="loadingOverlay">読み込み中...</div>
+
+  <div id="pageMenu" class="page active">
+    <div class="card">
+      <h3>夢Rikyuマネージャー管理ポータル</h3>
+      
+      <div class="menu-section cast">👤 キャスト関連</div>
+      <button class="btn btn-save" onclick="runGenerateDates()">🔄 【準備】次のシフトを作成</button>
+      <button class="btn btn-save" onclick="runSyncAndFormat()" style="background: #8e44ad;">🔄 【確定】シフトの同期・印刷準備</button>
+      <button class="btn" onclick="navTo('pagePrintMenu')" style="background-color: #ff9800;">🖨️ 印刷画面表示</button>
+      <button class="btn" onclick="navTo('pageNewCast')" style="background-color: #4caf50;">✨ 新規キャスト名簿追加</button>
+      <button class="btn btn-main" onclick="navTo('pageDateSelect')">📅 キャストのシフト検討・確定</button>
+      <button class="btn btn-main" onclick="loadPickupData()">🚗 本日の送迎確認</button>
+
+      <div class="menu-section staff">👔 スタッフ関連</div>
+      <button class="btn btn-main" onclick="loadTodayShifts()">👤 本日のスタッフシフト確認</button>
+      <button class="btn" onclick="navTo('pageStaffMenu')" style="background-color: #607d8b;">👥 スタッフシフト検討</button>
+
+      <div class="menu-section shop">🏪 店管理</div>
+      <button class="btn btn-main" onclick="window.open('https://yumerikyu-menu.github.io/yumerikyu-menu/', '_blank')">📖 メニュー表示</button>
+      <button class="btn btn-main" onclick="window.open('https://script.google.com/macros/s/AKfycbxn8UyXM8UoSIquZBDC5bULtE2YeiATZsmEu17aERwAqR1sf63NmrVeEARCWKRNgXc/exec', '_blank')">📱 リアルタイム店内管理</button>
+    </div>
+
+    <!-- AIアシスタント -->
+    <div class="card" style="margin-top: 15px;">
+      <h4 style="margin: 0; color: #111;">🤖 店長専属AIアシスタント</h4>
+      <p style="font-size: 12px; color: #666; margin: 5px 0;">ポータルの操作方法についてAIにチャット相談できます。</p>
+      
+      <div class="chat-box" id="aiResponseBox">ここにAIからの回答が表示されます。</div>
+      <textarea class="chat-input" id="aiPromptInput" rows="2" placeholder="例: キャストシフト編集テーブルの青や赤の色の意味は？"></textarea>
+      
+      <div style="display: flex; gap: 8px; margin-top: 10px;">
+        <button class="btn btn-main" id="aiSendBtn" onclick="sendToAI()" style="flex: 2; margin: 0; padding: 12px; font-size: 14px;">AIに相談する</button>
+        <button class="btn btn-back" onclick="clearAIChatHistory()" style="flex: 1; margin: 0; padding: 12px; font-size: 14px; background-color:#e0e0e0; color:#333;">リセット</button>
+        <button class="btn" onclick="toggleAiSettings()" style="flex: 1; margin: 0; padding: 12px; font-size: 14px; background-color:#6c757d; color:#fff;">⚙️ 設定</button>
+      </div>
+
+      <div class="ai-setting-panel" id="aiSettingsPanel">
+        <label>使用するAIモデル名:</label>
+        <input type="text" id="aiModelInput" placeholder="例: gemini-3.5-flash">
+        <label>Google AI Studio APIキー:</label>
+        <input type="text" id="aiApiKeyInput" placeholder="空欄時はデフォルトキーを使用します">
+        <button class="btn btn-save" onclick="saveAiConfigOnWeb()" style="height:40px; padding:8px; font-size:14px; margin:5px 0 0 0;">⚙️ この設定を保存する</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pageDateSelect" class="page">
+    <div class="card">
+      <h3>シフト編集日の選択</h3>
+      <div class="input-group"><input type="date" id="targetDate"></div>
+      <button class="btn btn-main" onclick="loadShiftData()">次へ進む ➔</button>
+      <button class="btn btn-back" onclick="navTo('pageMenu')">戻る</button>
+    </div>
+  </div>
+
+  <div id="pagePickup" class="page">
+    <div class="card">
+      <h3>🚗 本日の送迎確認</h3>
+      <div id="pickupContainer" style="text-align:left;">読み込み中...</div>
+      <button class="btn btn-back" onclick="navTo('pageMenu')">戻る</button>
+    </div>
+  </div>
+  
+  <div id="pageTodayShift" class="page">
+    <div class="card">
+      <h3>👤 本日のスタッフシフト</h3>
+      <div id="todayShiftContainer" style="text-align:left; white-space:pre-wrap; margin-top:15px;">読み込み中...</div>
+      <button class="btn btn-back" onclick="navTo('pageMenu')">戻る</button>
+    </div>
+  </div>
+
+  <div id="pageEditor" class="page">
+    <div class="card" style="padding: 10px;">
+      <h4 id="editorTitle" style="margin: 5px 0;"></h4>
+      <div class="table-container" id="tableContainer"></div>
+      <div id="status"></div>
+      <button class="btn btn-save" onclick="saveData()">💾 この週のシフトを保存</button>
+      <button class="btn btn-back" onclick="navTo('pageDateSelect')">戻る</button>
+    </div>
+  </div>
+
+  <div id="pagePrintMenu" class="page" style="padding: 20px;">
+    <h3>🖨️ 印刷画面メニュー</h3>
+    <a href="https://docs.google.com/spreadsheets/d/1rvSy5XMsNsMrG8uwu1OMYi3a7zEqfiQtwxVDuSHme5U/edit?gid=1810292525#gid=1810292525" target="_blank" rel="noopener noreferrer" style="display: block; background-color: #2196F3; color: white; text-align: center; text-decoration: none; padding: 15px; margin-bottom: 15px; border-radius: 8px; font-weight: bold;">📄 確定している一週間の印刷画面</a>
+    <a href="https://docs.google.com/spreadsheets/d/1rvSy5XMsNsMrG8uwu1OMYi3a7zEqfiQtwxVDuSHme5U/edit?gid=1795936743#gid=1795936743" target="_blank" rel="noopener noreferrer" style="display: block; background-color: #009688; color: white; text-align: center; text-decoration: none; padding: 15px; margin-bottom: 20px; border-radius: 8px; font-weight: bold;">📅 今日の出勤状況の印刷画面</a>
+    <button onclick="navTo('pageMenu')" style="width: 100%; padding: 12px; border-radius: 8px;">戻る</button>
+  </div>
+
+  <div id="pageNewCast" class="page" style="padding: 20px;">
+    <h3>✨ 新規キャスト登録</h3>
+    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+      <button onclick="document.getElementById('newCastForm').style.display='block'" style="flex: 1; background-color: #4caf50; color: white; padding: 10px; border-radius: 8px; font-weight: bold;">新規登録</button>
+      <a href="https://docs.google.com/spreadsheets/d/1rvSy5XMsNsMrG8uwu1OMYi3a7zEqfiQtwxVDuSHme5U/edit?gid=163544079#gid=163544079" target="_blank" style="flex: 1; background-color: #ff5722; color: white; text-align: center; text-decoration: none; padding: 10px; border-radius: 8px; font-weight: bold; line-height: 24px;">直接修正<br><small>(PC推奨)</small></a>
+    </div>
+    <div id="newCastForm" style="display: none; background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+      <label>名前 (B列): <input type="text" id="castName" style="width:100%; margin-bottom:10px; padding:8px;"></label>
+      <label>ID (C列): <input type="text" id="castId" style="width:100%; margin-bottom:10px; padding:8px;"></label>
+      <label>送迎先 (D列): <input type="text" id="castLoc" style="width:100%; margin-bottom:10px; padding:8px;"></label>
+      <label>入店日 (E列): <input type="date" id="castDate" style="width:100%; margin-bottom:15px; padding:8px;"></label>
+      <label style="font-weight:bold; display:block; margin-bottom:10px;"><input type="checkbox" id="castFixed" onchange="document.getElementById('fixedShiftDetails').style.display = this.checked ? 'block' : 'none'"> 固定シフトあり</label>
+      <div id="fixedShiftDetails" style="display:none; background: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom:15px;">
+        <p style="margin: 0 0 10px 0; font-size:12px;">※A〜D、または空欄を選択</p>
+        月: <select id="fsMon"><option value=""></option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select><br>
+        火: <select id="fsTue"><option value=""></option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select><br>
+        水: <select id="fsWed"><option value=""></option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select><br>
+        木: <select id="fsThu"><option value=""></option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select><br>
+        金: <select id="fsFri"><option value=""></option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select><br>
+        土: <select id="fsSat"><option value=""></option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select><br>
+        日: <select id="fsSun"><option value=""></option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select>
+      </div>
+      <button onclick="submitNewCast()" style="width:100%; background-color:#2196F3; color:white; padding:12px; border-radius:8px; font-weight:bold;">保存する</button>
+    </div>
+    <div id="castResult" style="margin-top:15px; font-weight:bold; color:green; text-align:center;"></div>
+    <button onclick="navTo('pageMenu')" style="width: 100%; padding: 12px; border-radius: 8px; margin-top: 15px;">戻る</button>
+  </div>
+
+  <div id="pageStaffMenu" class="page" style="padding: 20px;">
+    <h3>👥 スタッフシフト検討</h3>
+    <button onclick="navTo('pageNewStaff')" style="width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 8px; font-weight: bold; background-color:#9c27b0; color:white; border:none;">➕ 新規スタッフ追加</button>
+    <button class="btn" onclick="runMonthlyShiftUpdate()" style="background-color: #e91e63; color: white;">🔄 来月シフト作成準備</button>
+    <button class="btn" onclick="navTo('pageStaffShiftSelect')" style="background-color:#ff9800; color: white;">📝 現行シフト訂正</button>
+    <button onclick="navTo('pageMenu')" style="width: 100%; padding: 12px; border-radius: 8px; margin-top: 10px;">メインに戻る</button>
+  </div>
+
+  <div id="pageNewStaff" class="page" style="padding: 20px;">
+    <h3>➕ 新規スタッフ追加</h3>
+    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+      <label>シフト表上の名前 (C列) 必須: <input type="text" id="staffName" style="width:100%; margin-bottom:10px; padding:8px; border:2px solid #ff9800;"></label>
+      <label>LINE登録名 (A列): <br><small style="color:#666;">例: (送迎、⚫︎⚫︎) や (事務、⚫︎⚫︎)</small><input type="text" id="staffLine" style="width:100%; margin-bottom:10px; padding:8px;"></label>
+      <label>ルール (E列): <br><small style="color:#666;">例: （火、水）【20:00-LAST】</small><input type="text" id="staffRule" style="width:100%; margin-bottom:15px; padding:8px;"></label>
+      <button onclick="submitNewStaff()" style="width:100%; background-color:#2196F3; color:white; padding:12px; border-radius:8px; font-weight:bold;">保存する</button>
+    </div>
+    <div id="staffResult" style="margin-top:15px; font-weight:bold; color:green; text-align:center;"></div>
+    <button onclick="navTo('pageStaffMenu')" style="width: 100%; padding: 12px; border-radius: 8px; margin-top: 15px;">戻る</button>
+  </div>
+
+  <div id="pageStaffShiftSelect" class="page" style="padding: 20px;">
+    <h3>📅 編集するシフトの選択</h3>
+    <p style="font-size: 14px; color: #666; margin-bottom: 20px;">修正したいシートを選んでください。</p>
+    <button class="btn btn-main" onclick="loadStaffShiftData('latest')">最新スタッフシフトを編集</button>
+    <button class="btn btn-save" onclick="loadStaffShiftData('prev')" style="margin-top: 15px; background-color: #009688;">前月スタッフシフトを編集</button>
+    <button class="btn btn-back" onclick="navTo('pageStaffMenu')" style="margin-top: 30px;">戻る</button>
+  </div>
+
+  <div id="pageStaffEditor" class="page" style="padding: 10px;">
+    <div class="card" style="padding: 10px;">
+      <h4 id="staffEditorTitle" style="margin: 5px 0;">スタッフシフト編集</h4>
+      <div class="table-container" id="staffTableContainer"></div>
+      <div id="staffStatus" style="font-size: 14px; color: #666; margin: 10px 0; text-align: center;"></div>
+      <button class="btn btn-save" onclick="saveStaffShiftData()">💾 この月のシフトを保存</button>
+      <button class="btn btn-back" onclick="navTo('pageStaffShiftSelect')">戻る</button>
+    </div>
+  </div>
+
+  <script>
+    // 💡 店長専用のGASデプロイURL＿一度開発環境で設定
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyPUpz2AxFAIHEECDYB65gPPBOH8DP79s6YD6ye-p9Df_rPXxzBEqOagioJF55ceqa4Eg/exec"; 
+
+    function callApi(action, params, onSuccess, onFailure) {
+      const payload = { action: action, ...params };
+      fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(res => {
+        if (res.status === "success") {
+          if (onSuccess) onSuccess(res.data);
+        } else {
+          if (onFailure) onFailure(new Error(res.message));
+        }
+      })
+      .catch(err => {
+        if (onFailure) onFailure(err);
+      });
+    }
+
+    let activeInput = null;
+
+    function closeCustomModal() {
+      document.getElementById('customModal').style.display = 'none';
+      document.getElementById('modalInput').style.display = 'none';
+      document.getElementById('modalInput').value = '';
+      document.getElementById('modalInput').type = 'text'; 
+      document.getElementById('modalCancel').style.display = 'inline-block'; 
+    }
+
+    function showAlert(message, callback) {
+      closeCustomModal();
+      document.getElementById('modalMessage').innerText = message;
+      document.getElementById('modalCancel').style.display = 'none'; 
+      document.getElementById('customModal').style.display = 'flex';
+      document.getElementById('modalOk').onclick = function() {
+        closeCustomModal();
+        if(callback) callback();
+      };
+    }
+
+    function showConfirm(message, callback) {
+      closeCustomModal();
+      document.getElementById('modalMessage').innerText = message;
+      document.getElementById('customModal').style.display = 'flex';
+      document.getElementById('modalOk').onclick = function() {
+        closeCustomModal();
+        if(callback) callback(true);
+      };
+      document.getElementById('modalCancel').onclick = function() {
+        closeCustomModal();
+        if(callback) callback(false);
+      };
+    }
+
+    function showPrompt(message, defaultText, callback, isDate) {
+      closeCustomModal();
+      document.getElementById('modalMessage').innerText = message;
+      const input = document.getElementById('modalInput');
+      input.type = isDate ? 'date' : 'text'; 
+      input.style.display = 'block';
+      input.value = defaultText || '';
+      document.getElementById('customModal').style.display = 'flex';
+      input.focus();
+      document.getElementById('modalOk').onclick = function() {
+        const val = input.value; 
+        closeCustomModal();
+        if(callback) callback(val); 
+      };
+      document.getElementById('modalCancel').onclick = function() {
+        closeCustomModal();
+        if(callback) callback(null); 
+      };
+    }
+
+    function openPicker(input) {
+      activeInput = input;
+      document.getElementById('quick-picker').style.display = 'block';
+    }
+    function closePicker() {
+      document.getElementById('quick-picker').style.display = 'none';
+      activeInput = null;
+    }
+    function setPickerValue(val) {
+      if (activeInput) {
+        activeInput.value = val;
+        updateStaffColors(); 
+        closePicker();
+      }
+    }
+
+    function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
+    function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
+
+    function navTo(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      if (pageId !== 'pageStaffEditor') closePicker();
+    }
+
+    // ============================
+    // 💡 修正：カレンダーの初期値を確実に「月曜日」にする
+    // ============================
+    window.onload = function() {
+      const today = new Date();
+      const dayNum = today.getDay(); 
+      // 月曜を起点にする計算（日曜=0なら-6、それ以外は-dayNum+1）
+      const diff = today.getDate() - dayNum + (dayNum === 0 ? -6 : 1);
+      const monday = new Date(today.setDate(diff));
+      
+      // 世界標準時(UTC)への変換を避け、ローカル（日本時間）のまま YYYY-MM-DD を作る
+      const yyyy = monday.getFullYear();
+      const mm = String(monday.getMonth() + 1).padStart(2, '0');
+      const dd = String(monday.getDate()).padStart(2, '0');
+      
+      document.getElementById('targetDate').value = `${yyyy}-${mm}-${dd}`;
+    };
+
+    function loadShiftData() {
+      const selectedDate = document.getElementById('targetDate').value;
+      document.getElementById('editorTitle').innerText = selectedDate + " 週のシフト編集";
+      navTo('pageEditor');
+      showLoading();
+      
+      callApi("getShiftDataForAdmin", { selectedDate: selectedDate },
+        function(data) {
+          hideLoading();
+          renderTable(data);
+        },
+        function(err) {
+          hideLoading();
+          showAlert("データ取得エラー: " + err.message);
+        }
+      );
+    }
+
+    function renderTable(data) {
+      let html = '<table><thead><tr><th>キャスト</th>';
+      data.dates.forEach((d, i) => html += `<th>${d}<span class="count-badge" id="count-col-${i}">0人</span></th>`);
+      html += '</tr></thead><tbody>';
+      data.names.forEach((name, r) => {
+        html += `<tr><td>${name}</td>`;
+        for (let c = 0; c < 7; c++) {
+          const val = data.shiftData[c][r] || "";
+          const hasWish = data.wishData[c][r] === "●";
+          let className = (val && hasWish) ? "has-value" : (!val && hasWish) ? "need-attention" : (val && !hasWish) ? "warn-no-wish" : "";
+          html += `<td><select class="${className}" data-row="${r}" data-col="${c}" data-wish="${hasWish}" onchange="onSelectChange(this)">
+            <option value=""></option><option value="A" ${val==='A'?'selected':''}>A</option>
+            <option value="B" ${val==='B'?'selected':''}>B</option><option value="C" ${val==='C'?'selected':''}>C</option>
+            <option value="D" ${val==='D'?'selected':''}>D</option></select></td>`;
+        }
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      document.getElementById('tableContainer').innerHTML = html;
+      updateCounts();
+    }
+    
+    function onSelectChange(sel) {
+      const hasWish = sel.getAttribute('data-wish') === 'true';
+      sel.className = (sel.value && hasWish) ? "has-value" : (!sel.value && hasWish) ? "need-attention" : (sel.value && !hasWish) ? "warn-no-wish" : "";
+      updateCounts();
+    }
+    
+    function updateCounts() {
+      const counts = [0,0,0,0,0,0,0];
+      document.querySelectorAll('#tableContainer select').forEach(sel => { if(['A','B','C','D'].includes(sel.value)) { const col = parseInt(sel.dataset.col); if (!isNaN(col)) counts[col]++; } });
+      counts.forEach((c, i) => { const el = document.getElementById(`count-col-${i}`); if(el) el.innerText = `出勤: ${c}人`; });
+    }
+    
+    function saveData() {
+      showConfirm("保存して確定しますか？", function(isOk) {
+        if(!isOk) return; showLoading();
+        // 取得済みのキャスト名リストの長さを基準に空配列を作成
+        const namesLength = document.querySelectorAll('#tableContainer tbody tr').length;
+        const sendData = Array.from({length: 7}, () => Array(namesLength).fill(""));
+        const selectedDate = document.getElementById('targetDate').value; 
+        document.querySelectorAll('#tableContainer select').forEach(sel => {
+          const col = parseInt(sel.dataset.col); const row = parseInt(sel.dataset.row);
+          if (!isNaN(col) && !isNaN(row)) sendData[col][row] = sel.value;
+        });
+        
+        callApi("saveShiftDataFromAdmin", { shiftData: sendData, selectedDate: selectedDate },
+          function(res) {
+            hideLoading();
+            showAlert(res, function() { loadShiftData(); });
+          },
+          function(err) {
+            hideLoading();
+            showAlert("エラー: " + err.message);
+          }
+        );
+      });
+    }
+
+    // ============================
+    // スタッフシフト関連
+    // ============================
+    function runMonthlyShiftUpdate() {
+      showConfirm("【警告】\n現在の最新シフトを「前月」に移動し、最新シートを白紙にします。\n\n本当に実行しますか？", function(isOk) {
+        if(!isOk) return;
+        showLoading();
+        callApi("runMonthlyShiftUpdateGas", {}, 
+          function(res) { hideLoading(); showAlert(res); },
+          function(err) { hideLoading(); showAlert("エラー: " + err.message); }
+        );
+      });
+    }
+
+    let currentStaffTarget = '';
+    let staffDatesList = [];
+    let staffColIndices = [];
+
+    function loadStaffShiftData(target) {
+      currentStaffTarget = target;
+      navTo('pageStaffEditor');
+      showLoading();
+      
+      callApi("getStaffShiftData", { target: target },
+        function(data) {
+          hideLoading();
+          renderStaffTable(data, target);
+        },
+        function(err) {
+          hideLoading();
+          showAlert("エラー: " + err.message);
+          navTo('pageStaffShiftSelect');
+        }
+      );
+    }
+
+    function renderStaffTable(data, target) {
+      document.getElementById('staffEditorTitle').innerText = `${data.year}年${data.month}月 スタッフシフト (${target === 'latest' ? '最新' : '前月'})`;
+      staffDatesList = data.dates; staffColIndices = data.colIndices;
+      
+      let html = '<table><thead><tr><th>日付</th>';
+      for (let c = 0; c < data.names.length; c++) {
+        html += `<th>${data.names[c]}<br><small style="font-weight:normal; color:#e0f7fa;">${data.roles[c]}</small></th>`;
+      }
+      html += '</tr></thead><tbody>';
+      
+      for(let r = 0; r < staffDatesList.length; r++) {
+        const dateStr = staffDatesList[r].toString();
+        const weekStr = data.weekdays[r].toString();
+        const isHoliday = data.holidays.includes(dateStr);
+        const isMonday = weekStr.includes('月');
+        
+        const rowClass = (isMonday && !isHoliday) ? "monday-row" : "";
+        
+        html += `<tr class="${rowClass}"><td>${dateStr}日<br><small style="color:#666;">(${weekStr})</small></td>`;
+        for(let c = 0; c < data.names.length; c++) {
+          const val = data.shiftData[r][c] || "";
+          const role = data.roles[c] || "";
+          html += `<td><input type="text" class="shift-input" data-row="${r}" data-col="${c}" data-role="${role}" value="${val}" onfocus="openPicker(this)" oninput="updateStaffColors()"></td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</tbody></table>';
+      document.getElementById('staffTableContainer').innerHTML = html;
+      updateStaffColors();
+    }
+
+    function updateStaffColors() {
+      const tbody = document.querySelector('#staffTableContainer tbody');
+      if (!tbody) return;
+      const rows = tbody.querySelectorAll('tr');
+
+      rows.forEach(row => {
+        const isMonday = row.classList.contains('monday-row');
+        const inputs = row.querySelectorAll('input.shift-input');
+        
+        if (isMonday) {
+          inputs.forEach(input => input.style.backgroundColor = 'transparent');
+          return;
+        }
+
+        let hcCount = 0; let sCount = 0;
+        inputs.forEach(input => {
+          const role = (input.getAttribute('data-role') || '').replace(/\s+/g, '');
+          const val = input.value.trim();
+          if (val !== '') {
+            if (role.includes('ホール') || role.includes('厨房') || role.includes('キッチン')) hcCount++;
+            if (role.includes('送迎') || role.includes('ドライバー')) sCount++;
+          }
+        });
+
+        inputs.forEach(input => {
+          const role = (input.getAttribute('data-role') || '').replace(/\s+/g, '');
+          const isHc = role.includes('ホール') || role.includes('厨房') || role.includes('キッチン');
+          const isS = role.includes('送迎') || role.includes('ドライバー');
+          
+          input.style.backgroundColor = 'white';
+          if (isHc) {
+            if (hcCount === 0 || hcCount >= 4) input.style.backgroundColor = '#ffebee';
+            else if (hcCount === 1) input.style.backgroundColor = '#fffde7';
+            else if (hcCount === 2) input.style.backgroundColor = '#e8f5e9';
+          }
+          if (isS && sCount === 0) input.style.backgroundColor = '#ffebee';
+        });
+      });
+    }
+
+    function saveStaffShiftData() {
+      showConfirm("スタッフのシフトを保存しますか？", function(isOk) {
+        if(!isOk) return; showLoading();
+        const sendData = Array.from({length: staffDatesList.length}, () => Array(staffColIndices.length).fill(""));
+        document.querySelectorAll('#staffTableContainer input.shift-input').forEach(input => {
+          const row = parseInt(input.dataset.row); const col = parseInt(input.dataset.col);
+          if (!isNaN(row) && !isNaN(col)) sendData[row][col] = input.value;
+        });
+        
+        callApi("saveStaffShiftDataAdmin", { target: currentStaffTarget, shiftDataInput: sendData, colIndices: staffColIndices },
+          function(res) { hideLoading(); showAlert(res); },
+          function(err) { hideLoading(); showAlert("エラー: " + err.message); }
+        );
+      });
+    }
+
+    // ============================
+    // その他機能
+    // ============================
+    function loadPickupData() {
+      navTo('pagePickup');
+      document.getElementById('pickupContainer').innerHTML = "読み込み中...";
+      callApi("getTodayPickupData", {},
+        function(items) {
+          if (items.length === 0) { document.getElementById('pickupContainer').innerHTML = "本日の迎え希望はありません。"; return; }
+          let html = "";
+          items.forEach(item => {
+            let memoArr = []; if (item.other) memoArr.push(item.other); if (item.colG) memoArr.push(item.colG); if (item.colH) memoArr.push(item.colH); if (item.colI) memoArr.push(item.colI);
+            let memoHtml = memoArr.length > 0 ? `<div style="margin-top:10px; padding:10px; background:#f8f9fa; border-left:4px solid #ced4da;">📝 ${memoArr.join(' / ')}</div>` : "";
+            html += `<div style="background:white; border:1px solid #e0e0e0; border-radius:8px; padding:15px; margin-bottom:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="font-size:18px; font-weight:bold;">👤 ${item.name}</div>
+                <div style="font-size:13px; background:#e7f3ff; color:#0056b3; padding:4px 10px; border-radius:12px;">🚗 担当: ${item.driver || "未定"}</div>
+              </div>
+              <div>⏰ ${item.time || "未定"} | 📍 ${item.loc || "未定"}</div>${memoHtml}
+            </div>`;
+          });
+          document.getElementById('pickupContainer').innerHTML = html;
+        },
+        function(err) { document.getElementById('pickupContainer').innerHTML = "エラーが発生しました"; }
+      );
+    }
+    
+    function loadTodayShifts() {
+      navTo('pageTodayShift');
+      document.getElementById('todayShiftContainer').innerText = "読み込み中...";
+      callApi("getTodayShiftText", {},
+        function(res) { document.getElementById('todayShiftContainer').innerText = res; },
+        function(err) { document.getElementById('todayShiftContainer').innerText = "取得エラー"; }
+      );
+    }
+    
+    function submitNewCast() {
+      const name = document.getElementById('castName').value; if(!name) { showAlert("名前を入力してください"); return; }
+      const data = {
+        name: name, id: document.getElementById('castId').value, loc: document.getElementById('castLoc').value, date: document.getElementById('castDate').value, isFixed: document.getElementById('castFixed').checked
+      };
+      callApi("saveNewCastMember", { data: data },
+        function(res) { document.getElementById('castResult').innerHTML = res; },
+        function(err) { document.getElementById('castResult').innerHTML = "登録エラー"; }
+      );
+    }
+    
+    function submitNewStaff() {
+      const name = document.getElementById('staffName').value; if(!name) { showAlert("名前を入力してください"); return; }
+      const data = {
+        name: name, lineName: document.getElementById('staffLine').value, rule: document.getElementById('staffRule').value
+      };
+      callApi("saveNewStaffMember", { data: data },
+        function(res) { document.getElementById('staffResult').innerHTML = res; },
+        function(err) { document.getElementById('staffResult').innerHTML = "登録エラー"; }
+      );
+    }
+    
+    function runGenerateDates() {
+      const todayStr = document.getElementById('targetDate').value;
+      showPrompt("作成する週の月曜日の日付を選択してください。", todayStr, function(inputDate) {
+        if(!inputDate) return;
+        showConfirm(inputDate + " で土台を作成しますか？", function(isOk) {
+          if(!isOk) return;
+          showLoading();
+          callApi("generateShiftDates", { targetDateString: inputDate },
+            function(res) { hideLoading(); showAlert(res); },
+            function(err) { hideLoading(); showAlert("エラー: " + err.message); }
+          );
+        });
+      }, true); 
+    }
+
+    function runSyncAndFormat() {
+      showConfirm("シフトの同期・フォーマット作成・印刷用シートへの準備を連続して実行しますか？\n※完了まで数十秒かかる場合があります。", function(isOk) {
+        if(!isOk) return;
+        showLoading();
+        callApi("runSyncAndFormatProcess", {},
+          function(res) { hideLoading(); showAlert(res); },
+          function(err) { hideLoading(); showAlert("エラー: " + err.message); }
+        );
+      });
+    }
+
+    // ============================
+    // AIアシスタント関連
+    // ============================
+    let chatHistory = [];
+
+    function formatMarkdown(text) {
+      if (!text) return "";
+      let formatted = text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+        .replace(/\*(.*?)\*/g, '<em>$1</em>') 
+        .replace(/`(.*?)`/g, '<code>$1</code>') 
+        .replace(/\n/g, '<br>'); 
+      
+      let lines = formatted.split('<br>');
+      let inList = false;
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (line.startsWith('- ') || line.startsWith('• ') || line.startsWith('* ')) {
+          let content = line.substring(2);
+          if (!inList) {
+            lines[i] = '<ul><li>' + content + '</li>';
+            inList = true;
+          } else {
+            lines[i] = '<li>' + content + '</li>';
+          }
+        } else {
+          if (inList) {
+            lines[i-1] = lines[i-1] + '</ul>';
+            inList = false;
+          }
+        }
+      }
+      if (inList) { lines[lines.length - 1] = lines[lines.length - 1] + '</ul>'; }
+      return lines.join('<br>').replace(/<br><ul/g, '<ul').replace(/<\/ul><br>/g, '</ul>');
+    }
+
+    function sendToAI() {
+      const promptInput = document.getElementById('aiPromptInput');
+      const responseBox = document.getElementById('aiResponseBox');
+      const sendBtn = document.getElementById('aiSendBtn');
+      const userPrompt = promptInput.value.trim();
+      
+      if (!userPrompt) { showAlert("相談内容を入力してください。"); return; }
+      
+      chatHistory.push({ role: "user", parts: [{ text: userPrompt }] });
+      if (chatHistory.length > 40) chatHistory = chatHistory.slice(-40);
+      
+      responseBox.innerText = "AIがシステム仕様を参照しながら思考中... しばらくお待ちください。";
+      sendBtn.disabled = true;
+      sendBtn.style.opacity = "0.5";
+      
+      callApi("askAI", { history: chatHistory },
+        function(answer) {
+          sendBtn.disabled = false; sendBtn.style.opacity = "1";
+          chatHistory.push({ role: "model", parts: [{ text: answer }] });
+          responseBox.innerHTML = formatMarkdown(answer); 
+          promptInput.value = ""; 
+          responseBox.scrollTop = responseBox.scrollHeight; 
+        },
+        function(err) {
+          sendBtn.disabled = false; sendBtn.style.opacity = "1";
+          chatHistory.pop();
+          responseBox.innerText = "エラー: 応答を取得できませんでした。\n" + err.message;
+        }
+      );
+    }
+
+    function clearAIChatHistory() {
+      chatHistory = [];
+      document.getElementById('aiResponseBox').innerText = "会話の記憶をリセットしました。新しく質問をどうぞ。";
+      document.getElementById('aiPromptInput').value = "";
+    }
+
+    function toggleAiSettings() {
+      const panel = document.getElementById('aiSettingsPanel');
+      if (panel.style.display === 'block') {
+        panel.style.display = 'none';
+      } else {
+        panel.style.display = 'block';
+        showLoading();
+        callApi("getAiConfig", {},
+          function(config) {
+            hideLoading();
+            document.getElementById('aiModelInput').value = config.modelName;
+            document.getElementById('aiApiKeyInput').value = config.apiKey || "";
+          },
+          function(err) {
+            hideLoading();
+            showAlert("現在の設定読み込みに失敗しました: " + err.message);
+          }
+        );
+      }
+    }
+
+    function saveAiConfigOnWeb() {
+      const modelName = document.getElementById('aiModelInput').value.trim();
+      const apiKey = document.getElementById('aiApiKeyInput').value.trim();
+      if (!modelName) { showAlert("モデル名を入力してください。"); return; }
+      
+      showLoading();
+      callApi("saveAiConfig", { modelName: modelName, apiKey: apiKey },
+        function(res) {
+          hideLoading();
+          showAlert(res); 
+          document.getElementById('aiSettingsPanel').style.display = 'none';
+        },
+        function(err) {
+          hideLoading();
+          showAlert("設定の保存に失敗しました: " + err.message);
+        }
+      );
+    }
+  </script>
+</body>
+</html>
