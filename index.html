@@ -117,7 +117,7 @@
 
     <!-- AIアシスタント -->
     <div class="card" style="margin-top: 15px;">
-      <h4 style="margin: 0; color: #111;">🤖 店長専用AIアシスタント</h4>
+      <h4 style="margin: 0; color: #111;">🤖 店長専属AIアシスタント</h4>
       <p style="font-size: 12px; color: #666; margin: 5px 0;">ポータルの操作方法についてAIにチャット相談できます。</p>
       
       <div class="chat-box" id="aiResponseBox">ここにAIからの回答が表示されます。</div>
@@ -248,7 +248,7 @@
   </div>
 
   <script>
-    // 💡 修正：テスト環境用のGASデプロイURLをここに反映させます
+    // 💡 店長専用のGASデプロイURL＿一度開発環境で設定
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyPUpz2AxFAIHEECDYB65gPPBOH8DP79s6YD6ye-p9Df_rPXxzBEqOagioJF55ceqa4Eg/exec"; 
 
     function callApi(action, params, onSuccess, onFailure) {
@@ -351,14 +351,16 @@
     }
 
     // ============================
-    // 💡 時差ズレを防ぎ、確実に「月曜日」を初期セットする
+    // 💡 修正：カレンダーの初期値を確実に「月曜日」にする
     // ============================
     window.onload = function() {
       const today = new Date();
       const dayNum = today.getDay(); 
+      // 月曜を起点にする計算（日曜=0なら-6、それ以外は-dayNum+1）
       const diff = today.getDate() - dayNum + (dayNum === 0 ? -6 : 1);
       const monday = new Date(today.setDate(diff));
       
+      // 世界標準時(UTC)への変換を避け、ローカル（日本時間）のまま YYYY-MM-DD を作る
       const yyyy = monday.getFullYear();
       const mm = String(monday.getMonth() + 1).padStart(2, '0');
       const dd = String(monday.getDate()).padStart(2, '0');
@@ -602,35 +604,11 @@
       );
     }
     
-    // 💡 修正：キャスト登録時に月〜日のプルダウン情報を結合してGAS（data.fixedRule）へ正しく送信します
     function submitNewCast() {
-      const name = document.getElementById('castName').value; 
-      if(!name) { showAlert("名前を入力してください"); return; }
-      
-      let fixedRuleStr = "";
-      // チェックボックスがONの場合のみ月〜日のルールを結合
-      if (document.getElementById('castFixed').checked) {
-        const days = [
-          { id: 'fsMon', label: '月' }, { id: 'fsTue', label: '火' }, { id: 'fsWed', label: '水' },
-          { id: 'fsThu', label: '木' }, { id: 'fsFri', label: '金' }, { id: 'fsSat', label: '土' }, { id: 'fsSun', label: '日' }
-        ];
-        let rules = [];
-        days.forEach(d => {
-          const val = document.getElementById(d.id).value;
-          if (val) rules.push(`(${d.label})${val}`);
-        });
-        fixedRuleStr = rules.join("、"); // 例: (月)A、(水)C
-      }
-
+      const name = document.getElementById('castName').value; if(!name) { showAlert("名前を入力してください"); return; }
       const data = {
-        name: name, 
-        id: document.getElementById('castId').value, 
-        loc: document.getElementById('castLoc').value, 
-        date: document.getElementById('castDate').value, 
-        isFixed: document.getElementById('castFixed').checked,
-        fixedRule: fixedRuleStr // 💡 追加：組み立てたルール文字列をセット
+        name: name, id: document.getElementById('castId').value, loc: document.getElementById('castLoc').value, date: document.getElementById('castDate').value, isFixed: document.getElementById('castFixed').checked
       };
-      
       callApi("saveNewCastMember", { data: data },
         function(res) { document.getElementById('castResult').innerHTML = res; },
         function(err) { document.getElementById('castResult').innerHTML = "登録エラー"; }
